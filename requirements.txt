@@ -1,3 +1,0 @@
-pywebview
-psutil
-requests
