@@ -1,46 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Raw Mode Fixed</title>
+    <meta charset="UTF-8">
+    <title>Siar Kota OS</title>
+    
     <style>
-        body { background: #000; color: #0f0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: monospace; }
-        button { border: 2px solid #0f0; background: #030; color: #fff; font-size: 30px; padding: 20px 40px; cursor: pointer; border-radius: 10px; }
-        button:active { background: #0f0; color: #000; }
-        #status { margin-top: 20px; font-size: 20px; color: yellow; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        body { 
+            background: linear-gradient(135deg, #1e1e2f 0%, #0a0a12 100%); 
+            color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
+        }
+        header { 
+            height: 70px; background: rgba(255, 255, 255, 0.05); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; }
+        
+        /* Tombol OFF */
+        .btn-off {
+            background: #ff4444; color: white; border: none;
+            padding: 8px 25px; border-radius: 30px;
+            font-weight: bold; cursor: pointer; font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-off:active { transform: scale(0.95); background: #cc0000; }
+
+        /* Grid Menu */
+        main { 
+            flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); 
+            gap: 30px; padding: 50px; align-content: center; 
+        }
+        .card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 20px; height: 200px; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            transition: 0.3s; cursor: pointer; 
+        }
+        .card:hover { 
+            background: rgba(255, 255, 255, 0.15); 
+            transform: translateY(-8px); border-color: #00ff88; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .card:active { transform: scale(0.95); background: #00ff88; color: #000; }
+        .icon { font-size: 3.5rem; margin-bottom: 15px; }
+        h2 { font-size: 1.2rem; font-weight: 400; color: inherit; }
     </style>
 </head>
 <body>
 
-    <button onclick="tembakLangsung()">🚀 MATIKAN (ID: 1234)</button>
-    
-    <div id="status">Siap Tembak...</div>
+    <header>
+        <div class="logo">SIAR KOTA <span style="color:#00ff88">OS</span></div>
+        <div id="waktu" style="font-family: monospace; font-size: 1.2rem;">00:00:00</div>
+        <button class="btn-off" onclick="kirimSinyal('tutup_aplikasi')">POWER OFF</button>
+    </header>
+
+    <main>
+        <div class="card" onclick="kirimSinyal('buka_layanan')"><div class="icon">🏛️</div><h2>Layanan Publik</h2></div>
+        <div class="card" onclick="kirimSinyal('buka_data')"><div class="icon">📊</div><h2>Data Statistik</h2></div>
+        <div class="card" onclick="kirimSinyal('buka_darurat')"><div class="icon">🚑</div><h2>Gawat Darurat</h2></div>
+        <div class="card" onclick="kirimSinyal('buka_peta')"><div class="icon">🗺️</div><h2>Peta Wilayah</h2></div>
+        <div class="card" onclick="kirimSinyal('buka_berita')"><div class="icon">📰</div><h2>Berita Kota</h2></div>
+        <div class="card" onclick="kirimSinyal('buka_pengaturan')"><div class="icon">⚙️</div><h2>Pengaturan</h2></div>
+    </main>
 
     <script>
-        function tembakLangsung() {
-            var status = document.getElementById('status');
+        // 1. Jam Digital
+        setInterval(() => { 
+            document.getElementById('waktu').innerText = new Date().toLocaleTimeString(); 
+        }, 1000);
+
+        // 2. Fungsi Pengirim Sinyal (Tanpa Library)
+        function kirimSinyal(perintah) {
             
+            // Cek apakah jalur ke Python terbuka
             if (typeof qt !== 'undefined' && qt.webChannelTransport) {
                 
-                // 1. Siapkan Peluru LENGKAP (Pakai ID)
-                var peluru = {
+                // Buat Paket Data JSON (Protocol Qt Type 6)
+                var paket = {
                     "type": 6, 
                     "object": "jembatan_sistem",
                     "method": "terima_perintah",
-                    "args": ["tutup_aplikasi"],
-                    "id": 1234  // <--- INI KUNCI YANG HILANG TADI!
+                    "args": [perintah],
+                    "id": Math.floor(Math.random() * 10000) // ID Acak biar tidak ditolak
                 };
 
-                // 2. Tembak!
+                // Tembak!
                 try {
-                    qt.webChannelTransport.send(JSON.stringify(peluru));
-                    status.innerHTML = "📡 PAKET LENGKAP DIKIRIM!";
-                    status.style.color = "#0f0";
+                    qt.webChannelTransport.send(JSON.stringify(paket));
+                    console.log("Sinyal dikirim: " + perintah);
                 } catch (e) {
-                    status.innerHTML = "❌ Error: " + e;
+                    alert("Gagal kirim: " + e);
                 }
             } else {
-                status.innerHTML = "⚠️ KABEL PUTUS (qt object hilang)";
-                status.style.color = "red";
+                alert("Sistem belum siap! Tunggu sebentar...");
             }
         }
     </script>
