@@ -3,53 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <title>Siar Kota OS</title>
-    <script src="qwebchannel.js"></script>
     
+    <script>
+        "use strict";
+        // Versi QWebChannel yang sudah dipatch (Anti-Crash)
+        var QWebChannel=function(e,t){if("object"!=typeof e||"function"!=typeof e.send)return console.error("Bad QWebChannel transport",e),void 0;this.transport=e,this.execCallbacks={},this.execId=0,this.execRequests={},this.objects={},this.propertyUpdateHandlers={},var n=this;this.transport.onmessage=function(e){var t=e.data;"string"==typeof t&&(t=JSON.parse(t));switch(t.type){case 0:n.handleSignal(t);break;case 1:n.handleResponse(t);break;case 2:n.handlePropertyUpdate(t);break;case 10:n.handleResponse(t);break;default:console.error("invalid message:",e.data)}},this.exec(function(e){for(var r in e){var o=e[r];n.objects[r]=new QObject(r,o,n)}t&&t(n)})};QWebChannel.prototype.exec=function(e){if(!e)return;var t=this.execId++;this.execRequests[t]=e,this.transport.send(JSON.stringify({type:3,id:t}))},QWebChannel.prototype.handleSignal=function(e){var t=this.objects[e.object];t?t.signalEmitted(e.signal,e.args):console.warn("Unhandled signal:",e)},QWebChannel.prototype.handleResponse=function(e){e.hasOwnProperty("id")&&(this.execRequests[e.id]&&(this.execRequests[e.id](e.data),delete this.execRequests[e.id]))},QWebChannel.prototype.handlePropertyUpdate=function(e){for(var t in e.data){var n=e.data[t],r=this.objects[n.object];r?r.propertyUpdate(n.signals,n.properties):console.warn("Unhandled property:",n)}this.exec(e.data)};var QObject=function(e,t,n){this.__id__=e,this.__objectSignals__={},this.__propertyCache__={},var r=this;t.signals&&t.signals.forEach(function(e){r.__objectSignals__[e[0]]=r.createSignal(e[0],e[1]),r[e[0]]=r.__objectSignals__[e[0]]}),t.properties&&t.properties.forEach(function(e){r.__propertyCache__[e[0]]=e[1],Object.defineProperty(r,e[0],{get:function(){return r.__propertyCache__[e[0]]},set:function(t){r.__propertyCache__[e[0]]!==t&&(r.__propertyCache__[e[0]]=t)},enumerable:!0})}),t.methods&&t.methods.forEach(function(e){r[e[0]]=function(){var t=[],o=void 0;for(var i=0;i<arguments.length;i++)"function"==typeof arguments[i]?o=arguments[i]:t.push(arguments[i]);n.exec({type:6,object:r.__id__,method:e[0],args:t},function(e){void 0!==e&&o&&o(e)})}})};QObject.prototype.createSignal=function(e,t){var n={connect:function(e){"function"==typeof e&&n.listeners.push(e)},disconnect:function(e){var t=n.listeners.indexOf(e);-1!==t&&n.listeners.splice(t,1)},listeners:[]};return n},QObject.prototype.signalEmitted=function(e,t){var n=this.__objectSignals__[e];n&&n.listeners.forEach(function(e){e.apply(null,t)})},QObject.prototype.propertyUpdate=function(e,t){for(var n in t)this.__propertyCache__[n]=t[n]};
+    </script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #1e1e2f 0%, #0a0a12 100%); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        header { height: 60px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: space-between; padding: 0 30px; }
-        .logo { font-weight: bold; letter-spacing: 2px; }
-        .tombol-off { background: #ff4444; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; }
-        .tombol-off:hover { background: #ff0000; }
+        /* BAGIAN 2: DESAIN TAMPILAN */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        body { 
+            background: linear-gradient(135deg, #1e1e2f 0%, #0a0a12 100%); 
+            color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; 
+        }
         
-        main { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 40px; align-content: center; }
-        .card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.3s; cursor: pointer; }
-        .card:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-5px); border-color: #00ff88; }
-        .icon { font-size: 3rem; margin-bottom: 10px; }
+        /* Header */
+        header { 
+            height: 70px; background: rgba(255, 255, 255, 0.05); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 40px; 
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; }
+        
+        /* Tombol OFF */
+        .btn-off {
+            background: #ff4444; color: white; border: none;
+            padding: 10px 25px; border-radius: 30px;
+            font-weight: bold; cursor: pointer; font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-off:active { transform: scale(0.95); background: #cc0000; }
+
+        /* Grid Menu */
+        main { 
+            flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); 
+            gap: 30px; padding: 50px; align-content: center; 
+        }
+        .card { 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 20px; height: 200px; 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            transition: 0.3s; cursor: pointer; 
+        }
+        .card:hover { 
+            background: rgba(255, 255, 255, 0.15); 
+            transform: translateY(-8px); 
+            border-color: #00ff88; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .card:active { transform: scale(0.95); }
+        .icon { font-size: 3.5rem; margin-bottom: 15px; }
+        h2 { font-size: 1.2rem; font-weight: 400; color: #ddd; }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">SIAR KOTA</div>
-        <div id="waktu">00:00</div>
-        <div class="tombol-off" onclick="kirimPerintah('tutup_aplikasi')">OFF</div>
+        <div class="logo">SIAR KOTA <span style="color:#00ff88">OS</span></div>
+        <div id="waktu" style="font-family: monospace; font-size: 1.2rem;">00:00:00</div>
+        <button class="btn-off" onclick="matikanSistem()">POWER OFF</button>
     </header>
 
     <main>
-        <div class="card" onclick="kirimPerintah('layanan')"><div class="icon">🏛️</div><h2>Layanan</h2></div>
-        <div class="card" onclick="kirimPerintah('data')"><div class="icon">📊</div><h2>Data</h2></div>
-        <div class="card" onclick="kirimPerintah('darurat')"><div class="icon">🚑</div><h2>Darurat</h2></div>
-        <div class="card" onclick="kirimPerintah('peta')"><div class="icon">🗺️</div><h2>Peta</h2></div>
-        <div class="card" onclick="kirimPerintah('berita')"><div class="icon">📰</div><h2>Berita</h2></div>
-        <div class="card" onclick="kirimPerintah('pengaturan')"><div class="icon">⚙️</div><h2>Pengaturan</h2></div>
+        <div class="card" onclick="alert('Fitur Layanan Publik')"><div class="icon">🏛️</div><h2>Layanan Publik</h2></div>
+        <div class="card" onclick="alert('Fitur Data')"><div class="icon">📊</div><h2>Data Statistik</h2></div>
+        <div class="card" onclick="alert('Fitur Darurat')"><div class="icon">🚑</div><h2>Gawat Darurat</h2></div>
+        <div class="card" onclick="alert('Fitur Peta')"><div class="icon">🗺️</div><h2>Peta Wilayah</h2></div>
+        <div class="card" onclick="alert('Fitur Berita')"><div class="icon">📰</div><h2>Berita Kota</h2></div>
+        <div class="card" onclick="alert('Fitur Setting')"><div class="icon">⚙️</div><h2>Pengaturan</h2></div>
     </main>
 
     <script>
-        // 1. Jam
-        setInterval(() => { document.getElementById('waktu').innerText = new Date().toLocaleTimeString(); }, 1000);
+        // 1. Jam Digital
+        setInterval(() => { 
+            document.getElementById('waktu').innerText = new Date().toLocaleTimeString(); 
+        }, 1000);
 
-        // 2. LOGIKA JEMBATAN (PENTING!)
-        var backend;
+        // 2. Sambungan ke Python
+        var backendSiar = null;
+
         document.addEventListener("DOMContentLoaded", function () {
-            new QWebChannel(qt.webChannelTransport, function (channel) {
-                backend = channel.objects.jembatan_sistem;
-            });
+            // Tunggu sampai QtWebEngine siap menyuntikkan transportasi
+            if (typeof qt !== 'undefined') {
+                initJembatan();
+            } else {
+                window.addEventListener('load', initJembatan);
+            }
         });
 
-        function kirimPerintah(pesan) {
-            if (backend) backend.terima_perintah(pesan);
+        function initJembatan() {
+            console.log("Mencoba menghubungkan ke Python...");
+            try {
+                new QWebChannel(qt.webChannelTransport, function (channel) {
+                    // Berhasil Konek!
+                    backendSiar = channel.objects.jembatan_sistem;
+                    console.log("✅ TERHUBUNG DENGAN OTAK PYTHON");
+                });
+            } catch (e) {
+                console.error("Gagal konek:", e);
+            }
+        }
+
+        // Fungsi yang dipanggil tombol merah
+        function matikanSistem() {
+            if (backendSiar) {
+                backendSiar.terima_perintah("tutup_aplikasi");
+            } else {
+                alert("⚠️ Sistem belum siap sepenuhnya. Tunggu sebentar.");
+                // Coba inisialisasi paksa jika belum konek
+                initJembatan();
+            }
         }
     </script>
 </body>
