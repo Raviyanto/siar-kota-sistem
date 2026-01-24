@@ -5,37 +5,38 @@ from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 from PyQt6.QtCore import QUrl, QObject, pyqtSlot
 
-# --- BAGIAN SARAF (LOGIKA BACKEND) ---
+# --- BAGIAN LOGIKA (SARAF) ---
 class Jembatan(QObject):
     @pyqtSlot(str)
     def terima_perintah(self, pesan):
         print(f"📡 DITERIMA: {pesan}")
         
-        # Logika: Jika tombol OFF ditekan
         if pesan == "tutup_aplikasi":
-            print("Mematikan Sistem...")
-            sys.exit() # Tutup aplikasi
+            print("⚠️ KILL SWITCH AKTIF: Mematikan paksa...")
+            # PENTING: os._exit(0) mematikan proses seketika tanpa ampun
+            os._exit(0)
 
 # --- BAGIAN UTAMA ---
-# [FIX GPU] Matikan akselerasi hardware agar tidak crash di VirtualBox
+# Matikan fitur GPU yang bikin error di VirtualBox
 sys.argv.append("--disable-gpu")
 sys.argv.append("--disable-software-rasterizer")
 
 app = QApplication(sys.argv)
 browser = QWebEngineView()
 
-# 1. Siapkan Jembatan
+# Siapkan Jembatan
 channel = QWebChannel()
 handler = Jembatan()
-channel.registerObject('jembatan_sistem', handler) # Nama ini penting!
-
-# 2. Pasang Jembatan ke Browser
+channel.registerObject('jembatan_sistem', handler)
 browser.page().setWebChannel(channel)
 
-# 3. Muat HTML
+# Tentukan Lokasi File HTML (dashboard.html)
 path_sekarang = os.path.dirname(os.path.abspath(__file__))
-path_html = os.path.join(path_sekarang, "aset/index.html")
+path_html = os.path.join(path_sekarang, "aset/dashboard.html")
 browser.load(QUrl.fromLocalFile(path_html))
 
+# Tampilkan
 browser.showFullScreen()
+
+# Jalankan Aplikasi
 sys.exit(app.exec())

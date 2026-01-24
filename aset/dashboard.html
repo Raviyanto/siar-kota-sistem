@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Raw Mode Fixed</title>
+    <style>
+        body { background: #000; color: #0f0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: monospace; }
+        button { border: 2px solid #0f0; background: #030; color: #fff; font-size: 30px; padding: 20px 40px; cursor: pointer; border-radius: 10px; }
+        button:active { background: #0f0; color: #000; }
+        #status { margin-top: 20px; font-size: 20px; color: yellow; }
+    </style>
+</head>
+<body>
+
+    <button onclick="tembakLangsung()">🚀 MATIKAN (ID: 1234)</button>
+    
+    <div id="status">Siap Tembak...</div>
+
+    <script>
+        function tembakLangsung() {
+            var status = document.getElementById('status');
+            
+            if (typeof qt !== 'undefined' && qt.webChannelTransport) {
+                
+                // 1. Siapkan Peluru LENGKAP (Pakai ID)
+                var peluru = {
+                    "type": 6, 
+                    "object": "jembatan_sistem",
+                    "method": "terima_perintah",
+                    "args": ["tutup_aplikasi"],
+                    "id": 1234  // <--- INI KUNCI YANG HILANG TADI!
+                };
+
+                // 2. Tembak!
+                try {
+                    qt.webChannelTransport.send(JSON.stringify(peluru));
+                    status.innerHTML = "📡 PAKET LENGKAP DIKIRIM!";
+                    status.style.color = "#0f0";
+                } catch (e) {
+                    status.innerHTML = "❌ Error: " + e;
+                }
+            } else {
+                status.innerHTML = "⚠️ KABEL PUTUS (qt object hilang)";
+                status.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>

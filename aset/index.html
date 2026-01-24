@@ -62,14 +62,20 @@
             }
         };
 
+        // --- BAGIAN INI YANG MENGATASI ERROR ---
         QWebChannel.prototype.handleResponse = function(message) {
             if (!message.hasOwnProperty("id")) return;
-            // ANTI CRASH: Cek apakah callback masih ada
+            
+            // PEREDAM KEJUT: Cek apakah callbacknya ada?
+            // Jika undefined/null, blok ini dilewati (tidak error)
             if (this.execRequests[message.id]) {
                 this.execRequests[message.id](message.data);
                 delete this.execRequests[message.id];
+            } else {
+                console.log("Info: Mengabaikan pesan hantu ID:", message.id);
             }
         };
+        // ---------------------------------------
 
         QWebChannel.prototype.handlePropertyUpdate = function(message) {
             for (var i in message.data) {
@@ -237,7 +243,6 @@
         var backendSiar = null;
 
         document.addEventListener("DOMContentLoaded", function () {
-            // Tunggu sampai QtWebEngine siap menyuntikkan transportasi
             if (typeof qt !== 'undefined') {
                 initJembatan();
             } else {
@@ -248,7 +253,6 @@
         function initJembatan() {
             try {
                 new QWebChannel(qt.webChannelTransport, function (channel) {
-                    // Berhasil Konek!
                     backendSiar = channel.objects.jembatan_sistem;
                     console.log("✅ TERHUBUNG DENGAN OTAK PYTHON");
                 });
@@ -257,14 +261,12 @@
             }
         }
 
-        // Fungsi yang dipanggil tombol merah
         function matikanSistem() {
             if (backendSiar) {
                 backendSiar.terima_perintah("tutup_aplikasi");
             } else {
-                // Coba inisialisasi ulang jika belum konek
+                // Retry logic sederhana
                 initJembatan();
-                // Beri waktu sedikit
                 setTimeout(() => {
                     if(backendSiar) backendSiar.terima_perintah("tutup_aplikasi");
                     else alert("Sistem sedang memuat... Coba lagi!");
