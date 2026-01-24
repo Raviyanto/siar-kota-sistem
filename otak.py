@@ -12,12 +12,11 @@ class Jembatan(QObject):
         print(f"📡 DITERIMA: {pesan}")
         
         if pesan == "tutup_aplikasi":
-            print("⚠️ KILL SWITCH AKTIF: Mematikan paksa...")
-            # PENTING: os._exit(0) mematikan proses seketika tanpa ampun
-            os._exit(0)
+            print("🛑 SHUTDOWN AKTIF: Mematikan Sistem Operasi...")
+            # PENTING: Tambahkan 'sudo' agar sistem menurut
+            os.system("sudo systemctl poweroff")
 
 # --- BAGIAN UTAMA ---
-# Matikan fitur GPU yang bikin error di VirtualBox
 sys.argv.append("--disable-gpu")
 sys.argv.append("--disable-software-rasterizer")
 
@@ -30,7 +29,7 @@ handler = Jembatan()
 channel.registerObject('jembatan_sistem', handler)
 browser.page().setWebChannel(channel)
 
-# Tentukan Lokasi File HTML (dashboard.html)
+# Tentukan Lokasi File HTML
 path_sekarang = os.path.dirname(os.path.abspath(__file__))
 path_html = os.path.join(path_sekarang, "aset/dashboard.html")
 browser.load(QUrl.fromLocalFile(path_html))
