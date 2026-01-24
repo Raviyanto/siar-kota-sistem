@@ -2,21 +2,114 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <title>Siar Kota OS</title>
     <style>
+        /* Reset & Font */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        /* Background Gelap Futuristik */
         body {
-            background-color: #1a1a1a;
+            background: linear-gradient(135deg, #1e1e2f 0%, #0a0a12 100%);
             color: white;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Status Bar */
+        header {
+            height: 60px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+        }
+
+        .logo { font-size: 1.2rem; font-weight: bold; letter-spacing: 2px; }
+        .jam { font-family: monospace; font-size: 1.2rem; }
+        .status { background: #00ff88; color: black; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+
+        /* Grid Menu Utama */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 Kolom */
+            gap: 20px;
+            padding: 40px;
+            align-content: center; /* Tengah vertikal */
+        }
+
+        /* Kartu Menu */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: sans-serif;
+            transition: 0.3s;
+            cursor: pointer;
         }
-        h1 { font-size: 3em; }
+
+        .card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: #00ff88;
+        }
+
+        .icon { font-size: 3rem; margin-bottom: 10px; }
+        h2 { font-size: 1.2rem; font-weight: 400; }
+
     </style>
 </head>
 <body>
-    <h1>Siar Kota OS Berhasil Hidup!</h1>
+
+    <header>
+        <div class="logo">SIAR KOTA <span style="opacity:0.5">OS</span></div>
+        <div class="jam" id="waktu">00:00</div>
+        <div class="status">ONLINE</div>
+    </header>
+
+    <main>
+        <div class="card">
+            <div class="icon">🏛️</div>
+            <h2>Pelayanan Publik</h2>
+        </div>
+        <div class="card">
+            <div class="icon">📊</div>
+            <h2>Data Statistik</h2>
+        </div>
+        <div class="card">
+            <div class="icon">🚑</div>
+            <h2>Gawat Darurat</h2>
+        </div>
+        <div class="card">
+            <div class="icon">🗺️</div>
+            <h2>Peta Wilayah</h2>
+        </div>
+        <div class="card">
+            <div class="icon">📰</div>
+            <h2>Berita Kota</h2>
+        </div>
+        <div class="card">
+            <div class="icon">⚙️</div>
+            <h2>Pengaturan</h2>
+        </div>
+    </main>
+
+    <script>
+        // Jam Digital Sederhana
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('waktu').innerText = now.toLocaleTimeString();
+        }, 1000);
+    </script>
 </body>
 </html>
