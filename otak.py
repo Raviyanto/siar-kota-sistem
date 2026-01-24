@@ -17,6 +17,10 @@ class Jembatan(QObject):
             sys.exit() # Tutup aplikasi
 
 # --- BAGIAN UTAMA ---
+# [FIX GPU] Matikan akselerasi hardware agar tidak crash di VirtualBox
+sys.argv.append("--disable-gpu")
+sys.argv.append("--disable-software-rasterizer")
+
 app = QApplication(sys.argv)
 browser = QWebEngineView()
 
