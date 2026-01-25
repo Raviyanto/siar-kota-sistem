@@ -1,66 +1,89 @@
 import sys
 import os
 import psutil
+
+# --- BLOKADE ERROR GRAFIS & GPU (WAJIB DI ATAS IMPORT PYQT) ---
+# Mematikan akselerasi hardware agar tidak terjadi error gbm_wrapper di VirtualBox
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--disable-gpu --no-sandbox --disable-software-rasterizer"
+os.environ["QT_QUICK_BACKEND"] = "software"
+os.environ["QT_XCB_GL_INTEGRATION"] = "none"
+
 from PyQt6.QtCore import QUrl, QTimer, Qt, pyqtSlot, QObject
 from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 
-# Jembatan Komunikasi: Python -> HTML
+# Kelas Jembatan: Menghubungkan Tombol di HTML ke Perintah Sistem Debian
 class BackendSistem(QObject):
     @pyqtSlot()
     def matikan_sistem(self):
-        """Mematikan Debian 12"""
+        """Perintah Shutdown Debian 12"""
+        print("Siar Kota OS: Mematikan sistem...")
         os.system("systemctl poweroff")
 
     @pyqtSlot()
     def mulai_ulang_sistem(self):
-        """Reboot Debian 12"""
+        """Perintah Reboot Debian 12"""
+        print("Siar Kota OS: Memulai ulang sistem...")
         os.system("systemctl reboot")
 
 class SiarKotaOtak(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # Inisialisasi Browser
+        # 1. Inisialisasi Browser Engine
         self.browser = QWebEngineView()
         
-        # Setup Saluran Komunikasi (WebChannel)
+        # 2. Setup WebChannel (Jembatan Komunikasi Python-JS)
         self.channel = QWebChannel()
         self.backend = BackendSistem()
         self.channel.registerObject('backendSistem', self.backend)
         self.browser.page().setWebChannel(self.channel)
 
-        # Memuat Dashboard Lokal
-        path_html = os.path.abspath("dashboard.html")
-        self.browser.setUrl(QUrl.fromLocalFile(path_html))
+        # 3. Penentuan Jalur File dashboard.html di dalam folder 'aset'
+        # Mengambil lokasi folder tempat otak.py berada
+        base_dir = os.path.dirname(os.path.realpath(__file__))
+        # Menggabungkan dengan sub-folder 'aset'
+        path_html = os.path.join(base_dir, "aset", "dashboard.html")
+        
+        print(f"Memuat Antarmuka: {path_html}")
+        
+        if os.path.exists(path_html):
+            self.browser.setUrl(QUrl.fromLocalFile(path_html))
+        else:
+            # Tampilan darurat jika file tidak ditemukan
+            error_msg = f"<body style='background:black;color:red;padding:50px;'><h1>ERROR 404</h1><p>File tidak ditemukan di: {path_html}</p></body>"
+            self.browser.setHtml(error_msg)
 
-        # Konfigurasi Tampilan Kiosk
+        # 4. Konfigurasi Jendela Kiosk
         self.setCentralWidget(self.browser)
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.showFullScreen()
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint) # Menghilangkan border/bar atas
+        self.showFullScreen() # Mode layar penuh
 
-        # Timer untuk Sinkronisasi Sensor (Setiap 2 Detik)
+        # 5. Timer untuk Sinkronisasi Data Sensor (Interval 2 Detik)
         self.timer = QTimer()
-        self.timer.timeout.connect(self.perbarui_sensor)
+        self.timer.timeout.connect(self.update_data_sistem)
         self.timer.start(2000)
 
-    def perbarui_sensor(self):
-        """Mengirim data CPU/RAM ke Dashboard"""
+    def update_data_sistem(self):
+        """Mengirim data CPU dan RAM asli ke Dashboard"""
         try:
-            cpu = psutil.cpu_percent()
+            cpu = psutil.cpu_percent(interval=None)
             ram = psutil.virtual_memory().percent
-            # Menyuntikkan JavaScript ke halaman yang sedang berjalan
-            script = f"if(typeof updateMonitor === 'function') {{ updateMonitor({cpu}, {ram}); }}"
-            self.browser.page().runJavaScript(script)
+            # Injeksi data ke fungsi updateMonitor() di dashboard.html
+            js = f"if(typeof updateMonitor === 'function') {{ updateMonitor({cpu}, {ram}); }}"
+            self.browser.page().runJavaScript(js)
         except Exception as e:
-            print(f"Sensor Error: {e}")
+            print(f"Gagal memperbarui sensor: {e}")
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    # Sembunyikan kursor agar terlihat seperti OS tertanam
+    # Menjalankan aplikasi dengan argumen pelindung sandbox
+    app = QApplication(sys.argv + ['--no-sandbox'])
+    
+    # Sembunyikan kursor agar tampilan bersih seperti Kiosk
     app.setOverrideCursor(Qt.CursorShape.BlankCursor) 
     
-    mesin = SiarKotaOtak()
-    mesin.show()
+    jendela_utama = SiarKotaOtak()
+    jendela_utama.show()
+    
     sys.exit(app.exec())
