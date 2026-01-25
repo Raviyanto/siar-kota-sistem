@@ -1,41 +1,66 @@
 import sys
 import os
-from PyQt6.QtWidgets import QApplication
+import psutil
+from PyQt6.QtCore import QUrl, QTimer, Qt, pyqtSlot, QObject
+from PyQt6.QtWidgets import QApplication, QMainWindow
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
-from PyQt6.QtCore import QUrl, QObject, pyqtSlot
 
-# --- BAGIAN LOGIKA (SARAF) ---
-class Jembatan(QObject):
-    @pyqtSlot(str)
-    def terima_perintah(self, pesan):
-        print(f"📡 DITERIMA: {pesan}")
+# Jembatan Komunikasi: Python -> HTML
+class BackendSistem(QObject):
+    @pyqtSlot()
+    def matikan_sistem(self):
+        """Mematikan Debian 12"""
+        os.system("systemctl poweroff")
+
+    @pyqtSlot()
+    def mulai_ulang_sistem(self):
+        """Reboot Debian 12"""
+        os.system("systemctl reboot")
+
+class SiarKotaOtak(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # Inisialisasi Browser
+        self.browser = QWebEngineView()
         
-        if pesan == "tutup_aplikasi":
-            print("🛑 SHUTDOWN AKTIF: Mematikan Sistem Operasi...")
-            # PENTING: Tambahkan 'sudo' agar sistem menurut
-            os.system("sudo systemctl poweroff")
+        # Setup Saluran Komunikasi (WebChannel)
+        self.channel = QWebChannel()
+        self.backend = BackendSistem()
+        self.channel.registerObject('backendSistem', self.backend)
+        self.browser.page().setWebChannel(self.channel)
 
-# --- BAGIAN UTAMA ---
-sys.argv.append("--disable-gpu")
-sys.argv.append("--disable-software-rasterizer")
+        # Memuat Dashboard Lokal
+        path_html = os.path.abspath("dashboard.html")
+        self.browser.setUrl(QUrl.fromLocalFile(path_html))
 
-app = QApplication(sys.argv)
-browser = QWebEngineView()
+        # Konfigurasi Tampilan Kiosk
+        self.setCentralWidget(self.browser)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.showFullScreen()
 
-# Siapkan Jembatan
-channel = QWebChannel()
-handler = Jembatan()
-channel.registerObject('jembatan_sistem', handler)
-browser.page().setWebChannel(channel)
+        # Timer untuk Sinkronisasi Sensor (Setiap 2 Detik)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.perbarui_sensor)
+        self.timer.start(2000)
 
-# Tentukan Lokasi File HTML
-path_sekarang = os.path.dirname(os.path.abspath(__file__))
-path_html = os.path.join(path_sekarang, "aset/dashboard.html")
-browser.load(QUrl.fromLocalFile(path_html))
+    def perbarui_sensor(self):
+        """Mengirim data CPU/RAM ke Dashboard"""
+        try:
+            cpu = psutil.cpu_percent()
+            ram = psutil.virtual_memory().percent
+            # Menyuntikkan JavaScript ke halaman yang sedang berjalan
+            script = f"if(typeof updateMonitor === 'function') {{ updateMonitor({cpu}, {ram}); }}"
+            self.browser.page().runJavaScript(script)
+        except Exception as e:
+            print(f"Sensor Error: {e}")
 
-# Tampilkan
-browser.showFullScreen()
-
-# Jalankan Aplikasi
-sys.exit(app.exec())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    # Sembunyikan kursor agar terlihat seperti OS tertanam
+    app.setOverrideCursor(Qt.CursorShape.BlankCursor) 
+    
+    mesin = SiarKotaOtak()
+    mesin.show()
+    sys.exit(app.exec())
