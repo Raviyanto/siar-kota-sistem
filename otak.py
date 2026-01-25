@@ -19,13 +19,13 @@ class BackendSistem(QObject):
     def matikan_sistem(self):
         """Perintah Shutdown Debian 12"""
         print("Siar Kota OS: Mematikan sistem...")
-        os.system("systemctl poweroff")
+        os.system("sudo systemctl poweroff")
 
     @pyqtSlot()
     def mulai_ulang_sistem(self):
         """Perintah Reboot Debian 12"""
         print("Siar Kota OS: Memulai ulang sistem...")
-        os.system("systemctl reboot")
+        os.system("sudo systemctl reboot")
 
 class SiarKotaOtak(QMainWindow):
     def __init__(self):
