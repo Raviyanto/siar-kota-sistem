@@ -81,7 +81,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv + ['--no-sandbox'])
     
     # Sembunyikan kursor agar tampilan bersih seperti Kiosk
-    app.setOverrideCursor(Qt.CursorShape.BlankCursor) 
+    #app.setOverrideCursor(Qt.CursorShape.BlankCursor) 
     
     jendela_utama = SiarKotaOtak()
     jendela_utama.show()
