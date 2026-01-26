@@ -1,0 +1,4 @@
+# Abaikan folder instalasi aplikasi dari repositori sistem
+aplikasi/
+*.log
+__pycache__/
