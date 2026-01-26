@@ -1,19 +1,19 @@
-# Siar Kota OS (Sistem Utama)
+# 🧠 Siar Kota Sistem
 
-Ini adalah "Otak" dari sistem operasi Siar Kota.
-Berjalan di atas Debian 12 (Bookworm) tanpa Desktop Environment.
+Mesin utama (Core Engine) **Siar Kota OS** yang mengelola antarmuka kios dan logika sistem.
 
-## Cara Instalasi Ulang
+### 🛠 Spesifikasi Inti
+* **OS:** Debian 12.
+* **Bahasa:** Python.
+* **Framework GUI:** PyQt6 (WebEngine).
 
-1. Instal Debian Minimal (Netinst).
-2. Jangan pilih Desktop Environment, pilih "SSH Server" & "Standard Utilities".
-3. Jalankan perintah instalasi dependensi:
+### 🏗 Komponen Utama
+* **otak.py:** Backend pengelola aplikasi, sensor sistem, dan jembatan ke hardware.
+* **aset/dashboard.html:** Antarmuka visual utama berbasis web.
+* **aplikasi/:** Direktori lokal tempat aplikasi terinstal disimpan.
 
-```bash
-sudo apt update
-sudo apt install git python3-pip xorg openbox python3-pyqt6 python3-pyqt6.qtwebengine -y
+### ⚙️ Cara Menjalankan
+1. Pastikan dependensi PyQt6 dan Git terpasang.
+2. Jalankan `python3 otak.py`.
 
-
-startx /usr/bin/python3 /home/siar/Proyek_Siar/siar-kota-sistem/otak.py
-```
-
+> **Dokumentasi Lengkap:** Panduan instalasi dan konfigurasi sistem tersedia di [siar-kota-pustaka](https://github.com/Raviyanto/siar-kota-pustaka).
