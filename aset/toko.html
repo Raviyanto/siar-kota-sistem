@@ -39,7 +39,7 @@
         }
         function proses(nama, isInstalled) {
             if (isInstalled) { if(confirm("Hapus?")) toko.hapus_app(nama); }
-            else { toko.instal_app(nama); alert("Mengunduh..."); }
+            else { toko.instal_app(nama); alert("Menginstal Aplikasi"); }
             setTimeout(renderToko, 2000);
         }
     </script>
