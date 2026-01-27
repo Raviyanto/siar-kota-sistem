@@ -45,13 +45,19 @@
                 cursor: pointer;
                 transition: 0.3s;
             }
+
             .icon-box {
                 width: 70px;
                 height: 70px;
                 border: 3px solid var(--neon);
                 box-shadow: 0 0 10px var(--neon);
                 margin-bottom: 10px;
+                /* Tambahan agar gambar tampil rapi */
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
             }
+
             .sys-monitor {
                 border: 2px solid var(--neon);
                 padding: 20px;
@@ -129,19 +135,42 @@
                 refreshApps();
                 toko.appsChanged.connect(refreshApps);
             });
+
             function refreshApps() {
                 toko.dapatkan_aplikasi_terinstal(function (apps) {
                     const grid = document.getElementById('app-grid');
-                    grid.innerHTML = grid.firstElementChild.outerHTML;
+
+                    // 1. Bersihkan grid agar tidak terjadi penumpukan saat refresh
+                    grid.innerHTML = '';
+
+                    // 2. MASUKKAN TOKO SIMPUL SECARA PERMANEN (Item Wajib)
+                    // Jalur ikon mengarah ke folder aset, bukan folder aplikasi
+                    const tokoItem = document.createElement('div');
+                    tokoItem.className = 'app-item';
+                    tokoItem.onclick = () => {
+                        toko.buka_aplikasi_siar('toko_simpul');
+                    };
+                    tokoItem.innerHTML = `<div class="icon-box" style="background-image: url('toko_icon.png');"></div><span>TOKO SIMPUL</span>`;
+                    grid.appendChild(tokoItem);
+
+                    // 3. MASUKKAN APLIKASI LAIN (Dinamis dari Folder aplikasi/)
                     apps.forEach((app) => {
+                        // Kita skip jika ada folder bernama 'toko_simpul' di folder aplikasi agar tidak dobel
+                        if (app === 'toko_simpul') return;
+
                         const item = document.createElement('div');
                         item.className = 'app-item';
-                        item.onclick = () => toko.buka_aplikasi_siar(app);
-                        item.innerHTML = `<div class="icon-box"></div><span>${app.toUpperCase()}</span>`;
+                        item.onclick = () => {
+                            toko.buka_aplikasi_siar(app);
+                        };
+
+                        const iconPath = `../aplikasi/${app}/icon.png`;
+                        item.innerHTML = `<div class="icon-box" style="background-image: url('${iconPath}');"></div><span>${app.replace('_', ' ').toUpperCase()}</span>`;
                         grid.appendChild(item);
                     });
                 });
             }
+
             function updateMonitor(cpu, ram) {
                 document.getElementById('cpu-val').innerText = cpu + '%';
                 document.getElementById('ram-val').innerText = ram + '%';

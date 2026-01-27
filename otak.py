@@ -90,13 +90,25 @@ class TokoManager(QObject):
     # Tambahkan ini di dalam class TokoManager:
     @pyqtSlot(str)
     def buka_aplikasi_siar(self, app_id):
+        app_id = app_id.strip()
+
         if app_id == "penjelajah":
-            self.window_ref.nav_bar.show()  # Munculkan bar navigasi
+            self.window_ref.nav_bar.show()
             self.window_ref.browser.setUrl(QUrl("https://www.google.com"))
-        else:
-            self.window_ref.nav_bar.hide()  # Sembunyikan bar untuk aplikasi lain
-            path = os.path.join(self.apps_path, app_id, "index.html")
+
+        # Tambahkan kondisi khusus untuk Toko Simpul
+        elif app_id == "toko_simpul":
+            self.window_ref.nav_bar.hide()
+            path = os.path.join(self.base_path, "aset", "toko.html")
             self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
+
+        else:
+            self.window_ref.nav_bar.hide()
+            path = os.path.join(self.apps_path, app_id, "index.html")
+            if os.path.exists(path):
+                self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
+            else:
+                print(f"⚠️ Error: File tidak ditemukan di {path}")
 
 
 class BackendSistem(QObject):
