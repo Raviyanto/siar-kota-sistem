@@ -91,17 +91,19 @@ class TokoManager(QObject):
     @pyqtSlot(str)
     def buka_aplikasi_siar(self, app_id):
         app_id = app_id.strip()
-
-        if app_id == "penjelajah":
-            self.window_ref.nav_bar.show()
-            self.window_ref.browser.setUrl(QUrl("https://www.google.com"))
-
-        # Tambahkan kondisi khusus untuk Toko Simpul
-        elif app_id == "toko_simpul":
+        
+        # LOGIKA PERMANEN: Toko Simpul
+        if app_id == "toko_simpul":
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.base_path, "aset", "toko.html")
             self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
-
+            
+        # LOGIKA NON-PERMANEN: Penjelajah (Spesial: Buka Google)
+        elif app_id == "penjelajah":
+            self.window_ref.nav_bar.show()
+            self.window_ref.browser.setUrl(QUrl("https://www.google.com"))
+            
+        # LOGIKA NON-PERMANEN: Aplikasi lain (Kalkulator, dll)
         else:
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.apps_path, app_id, "index.html")
@@ -109,8 +111,7 @@ class TokoManager(QObject):
                 self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
             else:
                 print(f"⚠️ Error: File tidak ditemukan di {path}")
-
-
+            
 class BackendSistem(QObject):
     @pyqtSlot()
     def matikan_sistem(self):

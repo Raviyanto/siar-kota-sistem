@@ -140,22 +140,26 @@
                 toko.dapatkan_aplikasi_terinstal(function (apps) {
                     const grid = document.getElementById('app-grid');
 
-                    // 1. Bersihkan grid agar tidak terjadi penumpukan saat refresh
+                    // 1. Bersihkan grid total
                     grid.innerHTML = '';
 
-                    // 2. MASUKKAN TOKO SIMPUL SECARA PERMANEN (Item Wajib)
-                    // Jalur ikon mengarah ke folder aset, bukan folder aplikasi
-                    const tokoItem = document.createElement('div');
-                    tokoItem.className = 'app-item';
-                    tokoItem.onclick = () => {
+                    // 2. SATU-SATUNYA YANG PERMANEN: TOKO SIMPUL
+                    // Membuka file dari folder aset/ karena permanen
+                    const tokoBtn = document.createElement('div');
+                    tokoBtn.className = 'app-item';
+                    tokoBtn.onclick = () => {
                         toko.buka_aplikasi_siar('toko_simpul');
                     };
-                    tokoItem.innerHTML = `<div class="icon-box" style="background-image: url('toko_icon.png');"></div><span>TOKO SIMPUL</span>`;
-                    grid.appendChild(tokoItem);
+                    tokoBtn.innerHTML = `
+            <div class="icon-box" style="background-image: url('toko_icon.png');"></div>
+            <span>TOKO SIMPUL</span>
+        `;
+                    grid.appendChild(tokoBtn);
 
-                    // 3. MASUKKAN APLIKASI LAIN (Dinamis dari Folder aplikasi/)
+                    // 3. APLIKASI LAIN (Termasuk Penjelajah, Kalkulator, dll.)
+                    // Hanya muncul jika terinstal (ada di folder aplikasi/)
                     apps.forEach((app) => {
-                        // Kita skip jika ada folder bernama 'toko_simpul' di folder aplikasi agar tidak dobel
+                        // Abaikan jika ada folder toko_simpul di folder aplikasi agar tidak dobel
                         if (app === 'toko_simpul') return;
 
                         const item = document.createElement('div');
@@ -164,13 +168,18 @@
                             toko.buka_aplikasi_siar(app);
                         };
 
+                        // Ikon diambil dari folder masing-masing aplikasi
                         const iconPath = `../aplikasi/${app}/icon.png`;
-                        item.innerHTML = `<div class="icon-box" style="background-image: url('${iconPath}');"></div><span>${app.replace('_', ' ').toUpperCase()}</span>`;
+                        item.innerHTML = `
+                <div class="icon-box" style="background-image: url('${iconPath}');"></div>
+                <span>${app.replace('_', ' ').replace('-', ' ').toUpperCase()}</span>
+            `;
                         grid.appendChild(item);
                     });
                 });
             }
 
+            // Fungsi untuk memperbarui nilai CPU dan RAM
             function updateMonitor(cpu, ram) {
                 document.getElementById('cpu-val').innerText = cpu + '%';
                 document.getElementById('ram-val').innerText = ram + '%';
