@@ -3,7 +3,7 @@
 Mesin utama (Core Engine) **Siar Kota OS** yang mengelola antarmuka kios dan logika sistem.
 
 ### 🛠 Spesifikasi Inti
-* **OS:** Debian 12.
+* **OS:** Debian 13.
 * **Bahasa:** Python.
 * **Framework GUI:** PyQt6 (WebEngine).
 
