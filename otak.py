@@ -92,6 +92,13 @@ class TokoManager(QObject):
     def buka_aplikasi_siar(self, app_id):
         app_id = app_id.strip()
         
+        # TAMBAHKAN LOGIKA INI
+        if app_id == "dashboard":
+            self.window_ref.nav_bar.hide()
+            path = os.path.join(self.base_path, "aset", "dashboard.html")
+            self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
+            return
+
         # LOGIKA PERMANEN: Toko Simpul
         if app_id == "toko_simpul":
             self.window_ref.nav_bar.hide()
