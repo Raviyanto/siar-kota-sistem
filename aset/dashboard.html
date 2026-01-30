@@ -1,137 +1,154 @@
 <!doctype html>
 <html>
     <head>
+        <meta charset="UTF-8">
         <style>
             :root {
                 --neon: #39ff14;
                 --bg: #000;
+                --dim: rgba(57, 255, 20, 0.2);
             }
+            * { box-sizing: border-box; }
             body {
                 background: var(--bg);
                 color: var(--neon);
-                font-family: monospace;
+                font-family: 'Courier New', monospace;
                 margin: 0;
                 overflow: hidden;
                 height: 100vh;
                 display: flex;
                 flex-direction: column;
+                background-image: radial-gradient(var(--dim) 1px, transparent 1px);
+                background-size: 40px 40px;
             }
             header {
                 text-align: center;
                 padding: 30px 0;
+                flex-shrink: 0;
             }
             h1 {
                 font-size: 3rem;
-                letter-spacing: 10px;
-                text-shadow: 0 0 10px var(--neon);
+                letter-spacing: 12px;
+                text-shadow: 0 0 15px var(--neon);
+                margin: 0;
             }
             main {
                 flex: 1;
                 display: grid;
                 grid-template-columns: 1fr 350px;
                 padding: 20px 50px;
-                gap: 20px;
+                gap: 40px;
+                overflow: hidden;
             }
             #app-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 30px;
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 35px;
                 align-content: start;
+                overflow-y: auto;
+                padding-right: 10px;
             }
             .app-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 cursor: pointer;
-                transition: 0.3s;
+                transition: transform 0.2s, filter 0.2s;
+            }
+            .app-item:hover {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 10px var(--neon));
             }
 
             .icon-box {
-                width: 70px;
-                height: 70px;
-                border: 3px solid var(--neon);
+                width: 80px;
+                height: 80px;
+                border: 2px solid var(--neon);
                 box-shadow: 0 0 10px var(--neon);
-                margin-bottom: 10px;
-                /* Tambahan agar gambar tampil rapi */
+                margin-bottom: 12px;
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: rgba(0, 20, 0, 0.6);
             }
+            .fallback-text { font-size: 2.5rem; font-weight: bold; }
 
             .sys-monitor {
                 border: 2px solid var(--neon);
-                padding: 20px;
+                padding: 25px;
                 align-self: end;
                 margin-bottom: 20px;
+                background: rgba(0, 10, 0, 0.8);
+                box-shadow: 0 0 20px var(--dim);
             }
+            .mon-title {
+                text-align: center;
+                border-bottom: 1px solid var(--neon);
+                margin-bottom: 15px;
+                padding-bottom: 5px;
+                font-weight: bold;
+                letter-spacing: 3px;
+            }
+            .mon-val { 
+                font-weight: bold; 
+                color: #fff; 
+                text-shadow: 0 0 5px var(--neon); 
+            }
+
             footer {
                 border-top: 2px solid var(--neon);
                 padding: 15px 30px;
                 display: flex;
                 justify-content: space-between;
                 font-size: 1.2rem;
+                flex-shrink: 0;
+                background: #050505;
             }
             .btn {
                 background: none;
                 border: 1px solid var(--neon);
                 color: var(--neon);
-                padding: 5px;
+                padding: 10px;
                 cursor: pointer;
                 margin-top: 10px;
                 width: 100%;
                 font-family: inherit;
+                font-weight: bold;
             }
+            .btn:hover { background: var(--neon); color: var(--bg); }
         </style>
     </head>
     <body>
         <header><h1>SIAR KOTA OS</h1></header>
         <main>
             <div id="app-grid">
-                <div
-                    class="app-item"
-                    onclick="window.location.href = 'toko.html'"
-                >
-                    <div
-                        class="icon-box"
-                        style="background: rgba(57, 255, 20, 0.2)"
-                    ></div>
-                    <span>TOKO_SIMPUL</span>
                 </div>
-            </div>
+            
             <div class="sys-monitor">
-                <div
-                    style="
-                        text-align: center;
-                        border-bottom: 1px solid var(--neon);
-                        margin-bottom: 10px;
-                    "
-                >
-                    SYS_MONITOR
-                </div>
-                <div>CPU: <span id="cpu-val">0%</span></div>
-                <div>RAM: <span id="ram-val">0%</span></div>
-                <button class="btn" onclick="backend.mulai_ulang_sistem()">
-                    REBOOT
-                </button>
-                <button
-                    class="btn"
-                    style="color: #ff3131; border-color: #ff3131"
-                    onclick="backend.matikan_sistem()"
-                >
-                    SHUTDOWN
-                </button>
+                <div class="mon-title">SYS_MONITOR</div>
+                <div style="margin-bottom: 10px;">CPU: <span id="cpu-val" class="mon-val">0%</span></div>
+                <div style="margin-bottom: 20px;">RAM: <span id="ram-val" class="mon-val">0%</span></div>
+                
+                <button class="btn" onclick="backend.mulai_ulang_sistem()">REBOOT</button>
+                <button class="btn" style="color: #ff3131; border-color: #ff3131" onclick="backend.matikan_sistem()">SHUTDOWN</button>
             </div>
         </main>
         <footer>
             <div>SIARKOTA_OS_V2</div>
             <div id="clock">00.00.00</div>
         </footer>
+
         <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
         <script>
             let toko, backend;
             new QWebChannel(qt.webChannelTransport, function (channel) {
                 toko = channel.objects.tokoManager;
                 backend = channel.objects.backendSistem;
+                
+                // Sinkronisasi awal dan deteksi perubahan
                 refreshApps();
                 toko.appsChanged.connect(refreshApps);
             });
@@ -139,55 +156,59 @@
             function refreshApps() {
                 toko.dapatkan_aplikasi_terinstal(function (apps) {
                     const grid = document.getElementById('app-grid');
-
-                    // 1. Bersihkan grid total
                     grid.innerHTML = '';
 
-                    // 2. SATU-SATUNYA YANG PERMANEN: TOKO SIMPUL
-                    // Membuka file dari folder aset/ karena permanen
-                    const tokoBtn = document.createElement('div');
-                    tokoBtn.className = 'app-item';
-                    tokoBtn.onclick = () => {
-                        toko.buka_aplikasi_siar('toko_simpul');
-                    };
-                    tokoBtn.innerHTML = `
-            <div class="icon-box" style="background-image: url('toko_icon.png');"></div>
-            <span>TOKO SIMPUL</span>
-        `;
+                    // 1. TOKO SIMPUL (PERMANEN)
+                    const tokoBtn = createAppElement('toko_simpul', 'TOKO SIMPUL', 'toko_icon.png', true);
                     grid.appendChild(tokoBtn);
 
-                    // 3. APLIKASI LAIN (Termasuk Penjelajah, Kalkulator, dll.)
-                    // Hanya muncul jika terinstal (ada di folder aplikasi/)
+                    // 2. APLIKASI TERINSTAL LAINNYA
                     apps.forEach((app) => {
-                        // Abaikan jika ada folder toko_simpul di folder aplikasi agar tidak dobel
                         if (app === 'toko_simpul') return;
-
-                        const item = document.createElement('div');
-                        item.className = 'app-item';
-                        item.onclick = () => {
-                            toko.buka_aplikasi_siar(app);
-                        };
-
-                        // Ikon diambil dari folder masing-masing aplikasi
+                        
                         const iconPath = `../aplikasi/${app}/icon.png`;
-                        item.innerHTML = `
-                <div class="icon-box" style="background-image: url('${iconPath}');"></div>
-                <span>${app.replace('_', ' ').replace('-', ' ').toUpperCase()}</span>
-            `;
-                        grid.appendChild(item);
+                        const name = app.replace(/_|-/g, ' ').toUpperCase();
+                        const appBtn = createAppElement(app, name, iconPath, false);
+                        grid.appendChild(appBtn);
                     });
                 });
             }
 
-            // Fungsi untuk memperbarui nilai CPU dan RAM
+            function createAppElement(id, displayName, iconPath, isAset) {
+                const item = document.createElement('div');
+                item.className = 'app-item';
+                item.onclick = () => { toko.buka_aplikasi_siar(id === 'toko_simpul' ? 'toko_simpul' : id); };
+
+                // Deteksi ketersediaan ikon secara cerdas
+                const box = document.createElement('div');
+                box.className = 'icon-box';
+                box.style.backgroundImage = `url('${iconPath}')`;
+                
+                // Fallback jika icon.png tidak ditemukan
+                const imgCheck = new Image();
+                imgCheck.src = iconPath;
+                imgCheck.onerror = () => {
+                    box.style.backgroundImage = 'none';
+                    box.innerHTML = `<span class="fallback-text">${displayName[0]}</span>`;
+                };
+
+                item.appendChild(box);
+                const span = document.createElement('span');
+                span.innerText = displayName;
+                item.appendChild(span);
+                
+                return item;
+            }
+
             function updateMonitor(cpu, ram) {
                 document.getElementById('cpu-val').innerText = cpu + '%';
                 document.getElementById('ram-val').innerText = ram + '%';
             }
+
+            // Jam sistem gaya titik
             setInterval(() => {
-                document.getElementById('clock').innerText = new Date()
-                    .toLocaleTimeString('id-ID')
-                    .replace(/:/g, '.');
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID').replace(/:/g, '.');
             }, 1000);
         </script>
     </body>

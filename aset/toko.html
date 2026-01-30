@@ -2,45 +2,110 @@
 <html>
 <head>
     <style>
-        :root { --neon: #39ff14; --bg: #000; }
-        body { background: var(--bg); color: var(--neon); font-family: monospace; padding: 30px; margin: 0; }
-        .nav { border-bottom: 2px solid var(--neon); padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .app-item { border: 1px solid var(--neon); padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .btn { background: none; border: 1px solid var(--neon); color: var(--neon); padding: 10px; cursor: pointer; font-family: inherit; }
-        .btn:hover { background: var(--neon); color: var(--bg); }
+        :root { --neon: #39ff14; --bg: #000; --dim: rgba(57, 255, 20, 0.2); }
+        body { 
+            background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; 
+            padding: 30px; margin: 0; overflow-x: hidden;
+        }
+        .nav { 
+            border-bottom: 2px solid var(--neon); padding-bottom: 15px; 
+            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; 
+        }
+        
+        /* Layout Item Aplikasi */
+        .app-item { 
+            border: 1px solid var(--neon); padding: 20px; display: flex; 
+            align-items: center; margin-bottom: 15px; background: rgba(0, 20, 0, 0.5);
+        }
+        .app-icon { 
+            width: 60px; height: 60px; display: flex; align-items: center; 
+            justify-content: center; font-size: 40px; margin-right: 20px; flex-shrink: 0;
+        }
+        .app-icon img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .app-info { flex: 1; margin-right: 20px; }
+        .app-name { font-size: 1.4rem; font-weight: bold; display: block; margin-bottom: 5px; }
+        .app-desc { font-size: 0.9rem; opacity: 0.8; }
+
+        .btn { 
+            background: none; border: 1px solid var(--neon); color: var(--neon); 
+            padding: 12px 20px; cursor: pointer; font-family: inherit; font-weight: bold;
+        }
+        .btn:hover { background: var(--neon); color: var(--bg); box-shadow: 0 0 10px var(--neon); }
     </style>
 </head>
 <body>
-    <div class="nav"><h1>TOKO_SIMPUL</h1><button class="btn" onclick="window.location.href='dashboard.html'">KEMBALI</button></div>
-    <div id="display">Menghubungkan ke GitHub...</div>
+    <div class="nav">
+        <h1>TOKO_SIMPUL_V2</h1>
+        <button class="btn" onclick="window.location.href='dashboard.html'">KEMBALI</button>
+    </div>
+
+    <div id="display">Menghubungkan ke Gudang Aplikasi...</div>
+
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
     <script>
         let toko;
+        const GITHUB_RAW = "https://raw.githubusercontent.com/Raviyanto/gudang-aplikasi-siar/main/";
+
         new QWebChannel(qt.webChannelTransport, function(channel) {
             toko = channel.objects.tokoManager;
             renderToko();
         });
-        function renderToko() {
-            toko.dapatkan_daftar_remote(function(apps) {
-                const container = document.getElementById('display');
+
+        async function renderToko() {
+            const container = document.getElementById('display');
+            try {
+                // 1. Ambil data metadata aplikasi dari JSON
+                const response = await fetch(GITHUB_RAW + "daftar_aplikasi.json");
+                const apps = await response.json();
+
+                // 2. Ambil daftar yang sudah terinstal dari sistem
+                const installedApps = await new Promise(resolve => {
+                    toko.dapatkan_aplikasi_terinstal(resolve);
+                });
+
                 container.innerHTML = "";
                 apps.forEach(app => {
-                    // FIX: Menggunakan penamaan fungsi yang konsisten dengan Python
-                    const cekFunc = toko.cek_terinstal || toko.cekTerinstal;
-                    cekFunc(app, function(isInstalled) {
-                        const div = document.createElement('div');
-                        div.className = 'app-item';
-                        div.innerHTML = `<span>${app.toUpperCase()}</span> 
-                                         <button class="btn" onclick="proses('${app}', ${isInstalled})">${isInstalled ? 'UNINSTALL' : 'INSTALL'}</button>`;
-                        container.appendChild(div);
-                    });
+                    const isInstalled = installedApps.includes(app.id);
+                    const div = document.createElement('div');
+                    div.className = 'app-item';
+
+                    // 3. Logika Ikon: Deteksi jika Gambar (.png) atau Emoji
+                    let iconHtml = `<div class="app-icon">${app.ikon}</div>`;
+                    if (app.ikon.endsWith('.png')) {
+                        const iconUrl = `${GITHUB_RAW}${app.id}/${app.ikon}`;
+                        iconHtml = `<div class="app-icon"><img src="${iconUrl}" onerror="this.parentElement.innerHTML='📦'"></div>`;
+                    }
+
+                    div.innerHTML = `
+                        ${iconHtml}
+                        <div class="app-info">
+                            <span class="app-name">${app.nama.toUpperCase()}</span>
+                            <span class="app-desc">${app.deskripsi}</span>
+                        </div>
+                        <button class="btn" onclick="proses('${app.id}', ${isInstalled})">
+                            ${isInstalled ? 'UNINSTALL' : 'INSTALL'}
+                        </button>
+                    `;
+                    container.appendChild(div);
                 });
-            });
+            } catch (err) {
+                container.innerHTML = "Gagal memuat daftar aplikasi. Pastikan koneksi internet aktif.";
+                console.error(err);
+            }
         }
-        function proses(nama, isInstalled) {
-            if (isInstalled) { if(confirm("Hapus?")) toko.hapus_app(nama); }
-            else { toko.instal_app(nama); alert("Menginstal Aplikasi"); }
-            setTimeout(renderToko, 2000);
+
+        function proses(id, isInstalled) {
+            if (isInstalled) {
+                if(confirm(`Hapus ${id}?`)) {
+                    toko.hapus_app(id);
+                    setTimeout(renderToko, 1500);
+                }
+            } else {
+                toko.instal_app(id);
+                alert(`Sedang memasang ${id}...`);
+                setTimeout(renderToko, 3000);
+            }
         }
     </script>
 </body>
