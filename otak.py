@@ -88,10 +88,13 @@ class TokoManager(QObject):
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.base_path, "aset", "toko.html")
             self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
-        # Penjelajah Spesial
+
+        # Penjelajah Khusus
         elif app_id == "penjelajah":
-            self.window_ref.nav_bar.show()
-            self.window_ref.browser.setUrl(QUrl("https://www.google.com"))
+            self.window_ref.nav_bar.hide() # Gunakan Nav Bar di dalam HTML saja agar bersih
+            path = os.path.join(self.apps_path, "penjelajah", "index.html")
+            self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
+
         # Aplikasi Dinamis lainnya
         else:
             self.window_ref.nav_bar.hide()
