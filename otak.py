@@ -5,6 +5,8 @@ import subprocess
 import shutil
 import requests
 
+from saraf.saraf_catatan import CatatanSaraf
+
 # BLOKADE ERROR GRAFIS (WAJIB DI ATAS)
 # Tambahkan flag ini di baris os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] Anda
 # Tambahkan flag --disable-web-security untuk sementara
@@ -148,6 +150,8 @@ class SiarKotaOtak(QMainWindow):
         self.toko = TokoManager()
         self.sistem = BackendSistem()
         self.toko.window_ref = self  # Beri akses window ke TokoManager
+        self.catatan_backend = CatatanSaraf()
+        self.channel.registerObject("catatanSaraf", self.catatan_backend) 
 
         # 2. Setup Layout Utama (Menumpuk Nav Bar di atas Browser)
         self.central_widget = QWidget()
