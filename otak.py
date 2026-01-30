@@ -11,6 +11,8 @@ try:
 except ImportError:
     print("⚠️ Peringatan: saraf_catatan.py tidak ditemukan di folder saraf/")
 
+from saraf.saraf_berkas import BerkasSaraf
+
 # BLOKADE ERROR GRAFIS & STABILITAS (WAJIB DI ATAS)
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--disable-gpu --no-sandbox --disable-dev-shm-usage --disable-web-security"
@@ -114,6 +116,7 @@ class SiarKotaOtak(QMainWindow):
         # 1. Inisialisasi Objek Backend (Tanpa pendaftaran channel di sini)
         self.toko = TokoManager()
         self.sistem = BackendSistem()
+        self.berkas_backend = BerkasSaraf()
         self.toko.window_ref = self 
         try:
             self.catatan_backend = CatatanSaraf()
@@ -156,6 +159,7 @@ class SiarKotaOtak(QMainWindow):
         # Daftar semua objek ke channel
         self.channel.registerObject("tokoManager", self.toko)
         self.channel.registerObject("backendSistem", self.sistem)
+        self.channel.registerObject("berkasSaraf", self.berkas_backend)
         if self.catatan_backend:
             self.channel.registerObject("catatanSaraf", self.catatan_backend)
         
