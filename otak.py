@@ -5,10 +5,18 @@ import subprocess
 import shutil
 import requests
 
-# 1. BLOKADE ERROR GRAFIS & STABILITAS (WAJIB DI ATAS)
+
+# --- PERBAIKAN BLOKADE ERROR ---
+# Hapus atau komentari baris QTWEBENGINE_REMOTE_DEBUGGING jika ada
+if "QTWEBENGINE_REMOTE_DEBUGGING" in os.environ:
+    del os.environ["QTWEBENGINE_REMOTE_DEBUGGING"]
+
+# Gunakan level log 3 untuk menyembunyikan peringatan non-fatal
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
-    "--disable-gpu --no-sandbox --disable-dev-shm-usage --disable-web-security"
+    "--disable-gpu --no-sandbox --disable-dev-shm-usage --disable-web-security --log-level=3"
 )
+
+
 os.environ["QT_QUICK_BACKEND"] = "software"
 os.environ["QT_XCB_GL_INTEGRATION"] = "none"
 
