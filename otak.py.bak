@@ -5,7 +5,15 @@ import subprocess
 import shutil
 import requests
 
-# 1. BLOKADE ERROR GRAFIS & STABILITAS (WAJIB DI ATAS)
+# Import Saraf Modular
+try:
+    from saraf.saraf_catatan import CatatanSaraf
+except ImportError:
+    print("⚠️ Peringatan: saraf_catatan.py tidak ditemukan di folder saraf/")
+
+from saraf.saraf_berkas import BerkasSaraf
+
+# BLOKADE ERROR GRAFIS & STABILITAS (WAJIB DI ATAS)
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = (
     "--disable-gpu --no-sandbox --disable-dev-shm-usage --disable-web-security"
 )
@@ -17,10 +25,6 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHB
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 
-# Import Saraf Modular
-from saraf.saraf_catatan import CatatanSaraf
-from saraf.saraf_berkas import BerkasSaraf
-
 class TokoManager(QObject):
     appsChanged = pyqtSignal()
 
@@ -29,17 +33,8 @@ class TokoManager(QObject):
         self.repo_raw_url = "https://github.com/Raviyanto/gudang-aplikasi-siar.git"
         self.base_path = os.path.dirname(os.path.realpath(__file__))
         self.apps_path = os.path.join(self.base_path, "aplikasi")
-        self.window_ref = None # Akan diisi oleh SiarKotaOtak
-        
         if not os.path.exists(self.apps_path):
             os.makedirs(self.apps_path)
-
-    @pyqtSlot(str)
-    def navigasi_langsung(self, url):
-        """Membuka URL secara penuh untuk menghindari blokir iframe Google/YouTube"""
-        if self.window_ref:
-            self.window_ref.nav_bar.show() # Tampilkan bar sistem agar bisa kembali
-            self.window_ref.browser.setUrl(QUrl(url))
 
     @pyqtSlot(result=list)
     def dapatkan_daftar_remote(self):
@@ -82,32 +77,25 @@ class TokoManager(QObject):
     @pyqtSlot(str)
     def buka_aplikasi_siar(self, app_id):
         app_id = app_id.strip()
-        if not self.window_ref: return
-
-        # Jalur ke Dashboard
+        # Navigasi ke Dashboard Utama
         if app_id == "dashboard":
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.base_path, "aset", "dashboard.html")
             self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
             return
-
-        # Jalur ke Toko Simpul
+        # Toko Simpul Permanen
         if app_id == "toko_simpul":
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.base_path, "aset", "toko.html")
             self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
 
-        # Jalur ke Penjelajah (Upgrade: Membuka index.html penjelajah)
+        # Penjelajah Khusus
         elif app_id == "penjelajah":
-            self.window_ref.nav_bar.hide() 
+            self.window_ref.nav_bar.hide() # Gunakan Nav Bar di dalam HTML saja agar bersih
             path = os.path.join(self.apps_path, "penjelajah", "index.html")
-            if os.path.exists(path):
-                self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
-            else:
-                self.window_ref.nav_bar.show()
-                self.window_ref.browser.setUrl(QUrl("https://www.google.com"))
+            self.window_ref.browser.setUrl(QUrl.fromLocalFile(path))
 
-        # Jalur ke Aplikasi Dinamis (Kalkulator, Manajer Berkas, Catatan)
+        # Aplikasi Dinamis lainnya
         else:
             self.window_ref.nav_bar.hide()
             path = os.path.join(self.apps_path, app_id, "index.html")
@@ -128,14 +116,15 @@ class SiarKotaOtak(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # 1. Inisialisasi Objek Backend
+        # 1. Inisialisasi Objek Backend (Tanpa pendaftaran channel di sini)
         self.toko = TokoManager()
         self.sistem = BackendSistem()
-        self.catatan = CatatanSaraf()
-        self.berkas = BerkasSaraf()
-        
-        # Beri referensi window ke TokoManager agar bisa kontrol navigasi
+        self.berkas_backend = BerkasSaraf()
         self.toko.window_ref = self 
+        try:
+            self.catatan_backend = CatatanSaraf()
+        except:
+            self.catatan_backend = None
 
         # 2. Setup Layout Utama
         self.central_widget = QWidget()
@@ -144,65 +133,74 @@ class SiarKotaOtak(QMainWindow):
         self.layout_utama.setSpacing(0)
         self.setCentralWidget(self.central_widget)
 
-        # 3. Bilah Navigasi Sistem (Muncul hanya saat browsing web luar)
+        # 3. Bilah Navigasi Neon
         self.nav_bar = QWidget()
         self.nav_bar.setFixedHeight(50)
-        self.nav_bar.setStyleSheet("background: #111; border-bottom: 2px solid #39ff14;")
+        self.nav_bar.setStyleSheet("background: #111; border-bottom: 2px solid #0f0;")
         self.layout_nav = QHBoxLayout(self.nav_bar)
 
-        self.url_input = QLineEdit()
-        self.url_input.setStyleSheet("background: #222; border: 1px solid #39ff14; color: #39ff14; padding: 5px;")
-        
-        btn_kembali = QPushButton("◀ DASHBOARD")
-        btn_kembali.setStyleSheet("background: #39ff14; color: #000; font-weight: bold; padding: 5px 15px;")
-        btn_kembali.clicked.connect(self.kembali_ke_dashboard)
+        self.url_input = QLineEdit("https://www.google.com")
+        self.url_input.setStyleSheet("background: #222; border: 1px solid #0f0; color: #0f0; padding: 5px;")
+        self.url_input.returnPressed.connect(self.proses_navigasi)
+
+        self.btn_buka = QPushButton("BUKA")
+        self.btn_buka.setStyleSheet("background: #0f0; color: #000; font-weight: bold; padding: 5px 15px;")
+        self.btn_buka.clicked.connect(self.proses_navigasi)
+
+        self.btn_kembali = QPushButton("KEMBALI")
+        self.btn_kembali.setStyleSheet("background: #0f0; color: #000; font-weight: bold; padding: 5px 15px;")
+        self.btn_kembali.clicked.connect(self.kembali_ke_dashboard)
 
         self.layout_nav.addWidget(self.url_input)
-        self.layout_nav.addWidget(btn_kembali)
+        self.layout_nav.addWidget(self.btn_buka)
+        self.layout_nav.addWidget(self.btn_kembali)
 
         # 4. Setup Browser & Channel (URUTAN DIPERBAIKI)
         self.browser = QWebEngineView()
         self.channel = QWebChannel() 
 
-        # DAFTARKAN SEMUA OBJEK KE CHANNEL
+        # Daftar semua objek ke channel
         self.channel.registerObject("tokoManager", self.toko)
         self.channel.registerObject("backendSistem", self.sistem)
-        self.channel.registerObject("catatanSaraf", self.catatan)
-        self.channel.registerObject("berkasSaraf", self.berkas)
+        self.channel.registerObject("berkasSaraf", self.berkas_backend)
+        if self.catatan_backend:
+            self.channel.registerObject("catatanSaraf", self.catatan_backend)
         
         self.browser.page().setWebChannel(self.channel)
 
-        # 5. Satukan ke Layout Utama
+        # 5. Perakitan Akhir
         self.layout_utama.addWidget(self.nav_bar)
         self.layout_utama.addWidget(self.browser)
         self.nav_bar.hide()
 
-        # Load Dashboard Awal
-        self.base_path = os.path.dirname(os.path.realpath(__file__))
-        path_html = os.path.join(self.base_path, "aset", "dashboard.html")
+        path_html = os.path.join(os.path.dirname(os.path.realpath(__file__)), "aset", "dashboard.html")
         self.browser.setUrl(QUrl.fromLocalFile(path_html))
 
-        # Fullscreen & Tanpa Frame (Mode Kiosk)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.showFullScreen()
 
-        # Timer untuk Sensor Monitor
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_sensor)
         self.timer.start(2000)
 
+    def proses_navigasi(self):
+        url = self.url_input.text()
+        if not url.startswith("http"): url = "https://" + url
+        self.browser.setUrl(QUrl(url))
+
     def kembali_ke_dashboard(self):
-        self.toko.buka_aplikasi_siar('dashboard')
+        self.nav_bar.hide()
+        path_html = os.path.join(os.path.dirname(os.path.realpath(__file__)), "aset", "dashboard.html")
+        self.browser.setUrl(QUrl.fromLocalFile(path_html))
 
     def update_sensor(self):
         try:
-            cpu = psutil.cpu_percent()
-            ram = psutil.virtual_memory().percent
-            js = f"if(typeof updateMonitor === 'function') {{ updateMonitor({cpu}, {ram}); }}"
+            js = f"if(typeof updateMonitor === 'function') {{ updateMonitor({psutil.cpu_percent()}, {psutil.virtual_memory().percent}); }}"
             self.browser.page().runJavaScript(js)
         except: pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv + ["--no-sandbox"])
     win = SiarKotaOtak()
+    win.show()
     sys.exit(app.exec())
